@@ -10,6 +10,8 @@ st.set_page_config(page_title="SOS Deck Builder", layout="wide")
 def load_data():
     # Aqui você pode expandir com a lista completa de SOS
     data = [
+        {"nome": "Beledros Witherbloom", "cor": "Golgari", "cmc": 7, "tier": "S", "faculdade": "Witherbloom"},
+        {"nome": "Velomachus Lorehold", "cor": "Boros", "cmc": 7, "tier": "S", "faculdade": "Lorehold"},
         {"nome": "Dellian Fel", "cor": "Preto", "cmc": 4, "tier": "S", "faculdade": "Witherbloom"},
         {"nome": "Ral, Guest Lecturer", "cor": "Izzet", "cmc": 3, "tier": "S", "faculdade": "Prismari"},
         {"nome": "Arcane Thesis", "cor": "Azul", "cmc": 2, "tier": "B", "faculdade": "Quandrix"},
