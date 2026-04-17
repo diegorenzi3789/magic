@@ -2,77 +2,95 @@ import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 
-# Configuração da Página
-st.set_page_config(page_title="SOS Deck Builder 2026", layout="wide")
+st.set_page_config(page_title="SOS Master Deckbuilder", layout="wide")
 
-# BANCO DE DADOS ATUALIZADO: SECRETS OF STRIXHAVEN (SOS)
-def load_data():
+# 1. BANCO DE DADOS (Baseado na MTGStocks SOS)
+@st.cache_data
+def get_full_database():
     data = [
-        # --- LOREHOLD (RW) - Flashback ---
-        {"nome": "Velomachus Lorehold", "cor": "Boros", "cmc": 7, "tier": "S", "faculdade": "Lorehold"},
-        {"nome": "Lorehold, the Historian", "cor": "Boros", "cmc": 5, "tier": "S", "faculdade": "Lorehold"},
-        {"nome": "Ennis, Debate Moderator", "cor": "Branco", "cmc": 3, "tier": "A", "faculdade": "Lorehold"},
-        
-        # --- PRISMARI (UR) - Opus ---
-        {"nome": "Galazeth Prismari", "cor": "Izzet", "cmc": 4, "tier": "S", "faculdade": "Prismari"},
-        {"nome": "Prismari, the Inspiration", "cor": "Izzet", "cmc": 6, "tier": "S", "faculdade": "Prismari"},
-        {"nome": "Ral Zarek, Guest Lecturer", "cor": "Izzet", "cmc": 3, "tier": "S", "faculdade": "Prismari"},
-        {"nome": "Spectacular Skywhale", "cor": "Azul", "cmc": 5, "tier": "A", "faculdade": "Prismari"},
-        
-        # --- WITHERBLOOM (BG) - Infusion ---
+        # --- Raras e Míticas de Peso (Base MTGStocks) ---
         {"nome": "Beledros Witherbloom", "cor": "Golgari", "cmc": 7, "tier": "S", "faculdade": "Witherbloom"},
-        {"nome": "Witherbloom, the Balancer", "cor": "Golgari", "cmc": 4, "tier": "S", "faculdade": "Witherbloom"},
-        {"nome": "Dina's Guidance", "cor": "Verde", "cmc": 2, "tier": "B", "faculdade": "Witherbloom"},
-        {"nome": "Bogwater Lumaret", "cor": "Preto", "cmc": 3, "tier": "B", "faculdade": "Witherbloom"},
-        
-        # --- SILVERQUILL (WB) - Repartee ---
-        {"nome": "Shadrix Silverquill", "cor": "Orzhov", "cmc": 5, "tier": "S", "faculdade": "Silverquill"},
-        {"nome": "Silverquill, the Disputant", "cor": "Orzhov", "cmc": 4, "tier": "S", "faculdade": "Silverquill"},
-        {"nome": "Inkling Mascot", "cor": "Preto", "cmc": 2, "tier": "C", "faculdade": "Silverquill"},
-        
-        # --- QUANDRIX (UG) - Increment ---
+        {"nome": "Velomachus Lorehold", "cor": "Boros", "cmc": 7, "tier": "S", "faculdade": "Lorehold"},
+        {"nome": "Galazeth Prismari", "cor": "Izzet", "cmc": 4, "tier": "S", "faculdade": "Prismari"},
         {"nome": "Tanazir Quandrix", "cor": "Simic", "cmc": 5, "tier": "S", "faculdade": "Quandrix"},
-        {"nome": "Quandrix, the Proof", "cor": "Simic", "cmc": 6, "tier": "S", "faculdade": "Quandrix"},
-        {"nome": "Jadzi, Steward of Fate", "cor": "Simic", "cmc": 8, "tier": "A", "faculdade": "Quandrix"},
-        {"nome": "Applied Geometry", "cor": "Verde", "cmc": 1, "tier": "C", "faculdade": "Quandrix"},
-        
-        # --- MYSTICAL ARCHIVE (SOA) ---
-        {"nome": "Day of Judgment", "cor": "Branco", "cmc": 4, "tier": "S", "faculdade": "Arquivo"},
-        {"nome": "Brainstorm", "cor": "Azul", "cmc": 1, "tier": "A", "faculdade": "Arquivo"},
-        {"nome": "Dark Ritual", "cor": "Preto", "cmc": 1, "tier": "S", "faculdade": "Arquivo"},
-        {"nome": "Lightning Bolt", "cor": "Vermelho", "cmc": 1, "tier": "S", "faculdade": "Arquivo"},
+        {"nome": "Shadrix Silverquill", "cor": "Orzhov", "cmc": 5, "tier": "S", "faculdade": "Silverquill"},
+        {"nome": "Professor Onyx", "cor": "Preto", "cmc": 6, "tier": "S", "faculdade": "Witherbloom"},
+        {"nome": "Daydream", "cor": "Branco", "cmc": 1, "tier": "B", "faculdade": "Silverquill"},
+        {"nome": "Mila, Crafty Companion", "cor": "Branco", "cmc": 3, "tier": "A", "faculdade": "Neutral"},
+        {"nome": "Blex, Vexing Pest", "cor": "Verde", "cmc": 3, "tier": "A", "faculdade": "Witherbloom"},
+        # --- Arquivo Místico (SOA) ---
+        {"nome": "Time Warp", "cor": "Azul", "cmc": 5, "tier": "S", "faculdade": "Arquivo"},
+        {"nome": "Tainted Pact", "cor": "Preto", "cmc": 2, "tier": "A", "faculdade": "Arquivo"},
+        {"nome": "Inquisition of Kozilek", "cor": "Preto", "cmc": 1, "tier": "A", "faculdade": "Arquivo"},
+        {"nome": "Cultivate", "cor": "Verde", "cmc": 3, "tier": "A", "faculdade": "Arquivo"},
     ]
-    # DICA: Adicione aqui as outras comuns que você abrir no kit!
     return pd.DataFrame(data)
 
-df_db = load_data()
+# Inicializar a pool na sessão do usuário
+if 'pool' not in st.session_state:
+    st.session_state.pool = []
 
-st.title("🧙‍♂️ Secrets of Strixhaven (2026): Prerelease Helper")
+db = get_full_database()
 
-# BUSCA POR TEXTO (Para facilitar no celular)
-st.header("1. Sua Pool")
-busca = st.text_input("Digite o nome da carta para filtrar (ex: 'Beledros'):").lower()
-opcoes = df_db[df_db['nome'].str.lower().str.contains(busca)]['nome'].tolist()
+st.title("🧙‍♂️ Secrets of Strixhaven: Full Set Helper")
 
-cartas_selecionadas = st.multiselect("Selecione as cartas da sua pool:", options=opcoes)
+# --- AREA DE ADIÇÃO ---
+st.header("1. Monte sua Pool do Pre-release")
 
-if cartas_selecionadas:
-    pool_df = df_db[df_db['nome'].isin(cartas_selecionadas)].copy()
-    st.dataframe(pool_df[['nome', 'cor', 'cmc', 'tier', 'faculdade']], use_container_width=True)
+col1, col2 = st.columns(2)
 
-    # ANÁLISE IA
-    col1, col2 = st.columns(2)
-    with col1:
+with col1:
+    st.subheader("Buscar na Lista SOS")
+    nome_busca = st.selectbox("Selecione a carta:", [""] + sorted(db['nome'].tolist()))
+    if st.button("Adicionar da Lista ➕") and nome_busca != "":
+        carta = db[db['nome'] == nome_busca].iloc.to_dict()
+        st.session_state.pool.append(carta)
+        st.toast(f"{nome_busca} adicionada!")
+
+with col2:
+    st.subheader("Carta não está na lista?")
+    with st.expander("Adicionar Manualmente"):
+        m_nome = st.text_input("Nome da carta")
+        m_cor = st.selectbox("Cor", ["Branco", "Azul", "Preto", "Vermelho", "Verde", "Multicolor", "Incolor"])
+        m_cmc = st.number_input("CMC", 0, 10, 2)
+        m_tier = st.select_slider("Tier", ["S", "A", "B", "C", "D"], value="C")
+        if st.button("Adicionar Manual ✅"):
+            st.session_state.pool.append({"nome": m_nome, "cor": m_cor, "cmc": m_cmc, "tier": m_tier, "faculdade": "Manual"})
+            st.success("Adicionada!")
+
+# --- AREA DE ANÁLISE ---
+if st.session_state.pool:
+    df_pool = pd.DataFrame(st.session_state.pool)
+    
+    st.divider()
+    st.header("2. Análise do Deck")
+    
+    c1, c2 = st.columns()
+    
+    with c1:
+        st.subheader("Sua Pool Atual")
+        st.dataframe(df_pool, use_container_width=True)
+        if st.button("🗑️ Limpar Pool"):
+            st.session_state.pool = []
+            st.rerun()
+
+    with c2:
         st.subheader("Curva de Mana")
         fig, ax = plt.subplots()
-        pool_df['cmc'].value_counts().sort_index().plot(kind='bar', ax=ax, color='#7b2cbf')
+        df_pool['cmc'].value_counts().sort_index().plot(kind='bar', ax=ax, color='#4e008e')
         st.pyplot(fig)
-    
-    with col2:
-        st.subheader("Sugestão de Deck")
-        if len(pool_df) >= 5:
-            melhor_facul = pool_df['faculdade'].mode()
-            st.success(f"Vá de **{melhor_facul}**! Suas melhores cartas estão lá.")
-            if st.button("IA: Gerar Deck Selado"):
-                deck = pool_df.sort_values(by='tier').head(23)
-                st.table(deck[['nome', 'cmc', 'faculdade']])
+
+    # --- IA: GERADOR DE DECK ---
+    st.divider()
+    if st.button("🪄 IA: GERAR DECK DE 40 CARTAS"):
+        if len(df_pool) < 10:
+            st.warning("Adicione pelo menos 10 cartas para a IA sugerir uma base.")
+        else:
+            # Lógica: Seleciona as 23 melhores cartas por Tier
+            tier_rank = {"S": 0, "A": 1, "B": 2, "C": 3, "D": 4}
+            df_pool['rank'] = df_pool['tier'].map(tier_rank)
+            deck = df_pool.sort_values(by=['rank', 'cmc']).head(23)
+            
+            st.subheader("📋 Sugestão da IA (23 Mágicas)")
+            st.table(deck[['nome', 'cor', 'cmc', 'tier']])
+            st.info("💡 Complete com 17 terrenos (total 40 cartas).")
