@@ -6,7 +6,6 @@ import matplotlib.pyplot as plt
 st.set_page_config(page_title="SOS Deck Builder", layout="wide")
 
 # Simulação de Banco de Dados de Secrets of Strixhaven (SOS)
-@st.cache_data
 def load_data():
     # Aqui você pode expandir com a lista completa de SOS
     data = [
